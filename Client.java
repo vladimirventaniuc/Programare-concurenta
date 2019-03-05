@@ -16,7 +16,7 @@ public class Client {
         byte buffer[] =new byte[BUFFER_SIZE];
         BufferedInputStream in =
                 new BufferedInputStream(
-                        new FileInputStream("XMLValidator.jar"));
+                        new FileInputStream("bsmx_logs.7z"));
 
         int len = 0;
         long numberOfMessages=0;
@@ -34,7 +34,7 @@ public class Client {
 
         long endTime = System.currentTimeMillis();
 
-        printInfo("UDP",endTime-startTime, numberOfBytes, numberOfMessages);
+        printInfo("UDP",endTime-startTime, numberOfBytes, numberOfMessages,0);
         buffer = "bye".getBytes();
         DatagramPacket DpSend =
                 new DatagramPacket(buffer, buffer.length, ip, 1234);
@@ -44,10 +44,9 @@ public class Client {
     }
 
     public static void UDPACK() throws IOException{
-        Scanner sc = new Scanner(System.in);
 
         DatagramSocket ds = new DatagramSocket();
-
+        ds.setSoTimeout(500);
         InetAddress ip = InetAddress.getLocalHost();
         byte buffer[] =new byte[BUFFER_SIZE];
         BufferedInputStream in =
@@ -58,11 +57,18 @@ public class Client {
         long numberOfMessages=0;
         long numberOfBytes =0;
         long startTime = System.currentTimeMillis();
-
+        long lostPackages=0;
         while ((len = in.read(buffer)) > 0) {
             DatagramPacket DpSend =
                     new DatagramPacket(buffer, buffer.length, ip, 1234);
             ds.send(DpSend);
+            DatagramPacket DpReceive2 = new DatagramPacket("received".getBytes(), "received".getBytes().length);
+            try {
+                ds.receive(DpReceive2);
+
+            }catch (java.net.SocketTimeoutException e) {
+            lostPackages++;
+            }
             numberOfMessages++;
             numberOfBytes+=DpSend.getLength();
 //            System.out.print("#");
@@ -70,7 +76,7 @@ public class Client {
 
         long endTime = System.currentTimeMillis();
 
-        printInfo("UDP",endTime-startTime, numberOfBytes, numberOfMessages);
+        printInfo("UDP",endTime-startTime, numberOfBytes, numberOfMessages,0);
         buffer = "bye".getBytes();
         DatagramPacket DpSend =
                 new DatagramPacket(buffer, buffer.length, ip, 1234);
@@ -80,12 +86,13 @@ public class Client {
     }
 
 
-    public static void printInfo(String protocol, long time, long bytes, long messages){
+    public static void printInfo(String protocol, long time, long bytes, long messages, long lostPackages){
         System.out.println("_______________________________________________");
         System.out.println("Protocol: " + protocol);
         System.out.println("Transfer time: " + (time) + " milliseconds");
         System.out.println("Number of messages: " + messages);
         System.out.println("Number of bytes: " + bytes);
+//        System.out.println("Lost packages " + lostPackages);
     }
     public static void TCP() throws Exception{
         Socket s = new Socket("localhost", 9999);
@@ -94,7 +101,7 @@ public class Client {
 
         BufferedInputStream in =
                 new BufferedInputStream(
-                        new FileInputStream("XMLValidator.jar"));
+                        new FileInputStream("bsmx_logs.7z"));
 
         BufferedOutputStream out =
                 new BufferedOutputStream(s.getOutputStream());
@@ -112,17 +119,17 @@ public class Client {
         }
         long endTime = System.currentTimeMillis();
 
-        printInfo("TCP",endTime-startTime, numberOfBytes, numberOfMessages);
+        printInfo("TCP",endTime-startTime, numberOfBytes, numberOfMessages,0);
         s.close();
     }
     public static void TCPACK() throws Exception{
         Socket s = new Socket("localhost", 9999);
 //            DataOutputStream dout = new DataOutputStream(s.getInputStream());
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-
+        s.setSoTimeout(500);
         BufferedInputStream in =
                 new BufferedInputStream(
-                        new FileInputStream("XMLValidator.jar"));
+                        new FileInputStream("bsmx_logs.7z"));
 
         BufferedOutputStream out =
                 new BufferedOutputStream(s.getOutputStream());
@@ -134,16 +141,21 @@ public class Client {
         long numberOfBytes =0;
         long numberOfMessages = 0;
         long startTime = System.currentTimeMillis();
+        long lostPackages = 0;
         while ((len = in.read(buffer)) > 0) {
             numberOfMessages++;
             numberOfBytes+=len;
             out.write(buffer, 0, len);
-            fromServer.read(buffer2);
+            try {
+                fromServer.read(buffer2);
+            }catch (java.net.SocketTimeoutException e) {
+                lostPackages++;
+            }
 
         }
         long endTime = System.currentTimeMillis();
 
-        printInfo("TCP",endTime-startTime, numberOfBytes, numberOfMessages);
+        printInfo("TCP",endTime-startTime, numberOfBytes, numberOfMessages, lostPackages);
         s.close();
     }
     public static void main(String args[])
@@ -152,7 +164,7 @@ public class Client {
             @Override
             public void run() {
                 try {
-                    UDP();
+                    UDPACK();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

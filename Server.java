@@ -10,7 +10,7 @@ public class Server {
         BufferedInputStream in =
                 new BufferedInputStream(ss.getInputStream());
 
-
+//        ss.setSoTimeout(2000);
         byte[] buffer = new byte[65535];
         int len = 0;
         long numberOfMessages=0;
@@ -53,6 +53,7 @@ public class Server {
 
         DatagramSocket ds = new DatagramSocket(1234);
         byte[] receive = new byte[65535];
+        InetAddress ip = InetAddress.getLocalHost();
         long numberOfMessages=0;
         long numberOfBytes =0;
         DatagramPacket DpReceive = null;
@@ -60,9 +61,11 @@ public class Server {
         {
 
             DpReceive = new DatagramPacket(receive, receive.length);
-
-
             ds.receive(DpReceive);
+
+            DatagramPacket DpSend =
+                    new DatagramPacket("received".getBytes(), "received".getBytes().length, ip, 1234);
+            ds.send(DpSend);
 
             if (data(receive).toString().equals("bye"))
             {
@@ -113,7 +116,7 @@ public class Server {
             @Override
             public void run() {
                 try {
-                    UDP();
+                    UDPACK();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
