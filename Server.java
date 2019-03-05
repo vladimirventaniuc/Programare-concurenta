@@ -25,8 +25,57 @@ public class Server {
         printInfo(protocol, numberOfBytes, numberOfMessages);
         ss.close();
     }
+    public static void TCPACK() throws Exception {
+        ServerSocket s = new ServerSocket(9999);
+        Socket ss = s.accept();
+
+        System.out.println("connected");
+        BufferedInputStream in =
+                new BufferedInputStream(ss.getInputStream());
+        BufferedOutputStream out =
+                new BufferedOutputStream(ss.getOutputStream());
+
+        byte[] buffer = new byte[65535];
+        int len = 0;
+        long numberOfMessages=0;
+        long numberOfBytes =0;
+        while ((len = in.read(buffer)) > 0) {
+            numberOfMessages++;
+            numberOfBytes+=len;
+            out.write("received".getBytes());
+        }
+        String protocol = "TCP";
+        printInfo(protocol, numberOfBytes, numberOfMessages);
+        ss.close();
+    }
 
     public static void UDP() throws IOException{
+
+        DatagramSocket ds = new DatagramSocket(1234);
+        byte[] receive = new byte[65535];
+        long numberOfMessages=0;
+        long numberOfBytes =0;
+        DatagramPacket DpReceive = null;
+        while (true)
+        {
+
+            DpReceive = new DatagramPacket(receive, receive.length);
+
+
+            ds.receive(DpReceive);
+
+            if (data(receive).toString().equals("bye"))
+            {
+                break;
+            }
+            numberOfMessages++;
+            numberOfBytes+=DpReceive.getLength();
+            receive = new byte[65535];
+        }
+        printInfo("UDP",numberOfBytes, numberOfMessages);
+    }
+
+    public static void UDPACK() throws IOException{
 
         DatagramSocket ds = new DatagramSocket(1234);
         byte[] receive = new byte[65535];
@@ -52,7 +101,6 @@ public class Server {
         printInfo("UDP",numberOfBytes, numberOfMessages);
     }
 
-
     public static void printInfo(String protocol, long bytes, long messages){
         System.out.println("____________________");
         System.out.println("Protocol: " + protocol);
@@ -76,7 +124,7 @@ public class Server {
             @Override
             public void run() {
                 try {
-                    TCP();
+                    TCPACK();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
